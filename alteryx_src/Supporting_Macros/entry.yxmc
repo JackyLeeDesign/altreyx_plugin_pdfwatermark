@@ -1,0 +1,399 @@
+<?xml version="1.0"?>
+<AlteryxDocument yxmdVer="2020.4">
+  <Nodes>
+    <Node ToolID="1">
+      <GuiSettings Plugin="AlteryxGuiToolkit.Questions.Tab.Tab">
+        <Position x="0" y="0" width="59" height="59" />
+      </GuiSettings>
+      <Properties>
+        <Configuration />
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+    </Node>
+    <Node ToolID="3">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.MacroInput.MacroInput">
+        <Position x="54" y="78" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <UseFileInput value="False" />
+          <Name>Input</Name>
+          <Abbrev />
+          <ShowFieldMap value="True" />
+          <Optional value="False" />
+          <TextInput>
+            <Configuration>
+              <NumRows value="1" />
+              <Fields>
+                <Field name="pdf_path" />
+              </Fields>
+              <Data>
+                <r>
+                  <c>C:\Users\JYKL\Desktop\testPDF.pdf</c>
+                </r>
+              </Data>
+            </Configuration>
+          </TextInput>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name>Input</Name>
+          <DefaultAnnotationText>Input</DefaultAnnotationText>
+          <Left value="True" />
+        </Annotation>
+        <MetaInfo connection="Output">
+          <RecordInfo>
+            <Field name="pdf_path" size="33" source="TextInput:" type="String" />
+          </RecordInfo>
+        </MetaInfo>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxMacroInput" />
+    </Node>
+    <Node ToolID="7">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.MacroOutput.MacroOutput">
+        <Position x="426" y="54" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Name>Output</Name>
+          <Abbrev />
+        </Configuration>
+        <Annotation DisplayMode="1">
+          <Name>Output</Name>
+          <DefaultAnnotationText>Output</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxMacroOutput" />
+    </Node>
+    <Node ToolID="19">
+      <GuiSettings Plugin="JupyterCode">
+        <Position x="330" y="78" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <WorkflowName>c:\users\jykl\desktop\alteryx\altreyx_ait_components\altreyx_plugin_pdfwatermark\alteryx_src\supporting_macros\entry.yxmc</WorkflowName>
+          <JupyterProduction>true</JupyterProduction>
+          <vEnvName>jupytertool_venv</vEnvName>
+          <DefaultVenv>1</DefaultVenv>
+          <productionModeScript>#################################
+# List all non-standard packages to be imported by your 
+# script here (only missing packages will be installed)
+from ayx import Package
+Package.installPackages(package=['pandas','PyPDF2'], install_type="install --user")
+Package.installPackages(package=['pymupdf'], install_type="install --user --upgrade")
+
+
+#################################
+from ayx import Alteryx
+from datetime import datetime
+import pandas as pd
+import os
+import fitz
+from PyPDF2 import PdfWriter, PdfReader
+input_data = Alteryx.read("#1")
+
+
+try:
+    # 讀取參數設定
+    pdf_list= input_data['pdf_path']
+    # 宣告輸出結果之pandas表格
+    resultTemplate = {
+        "FilePath": pdf_list
+    }
+    resultData = pd.DataFrame(resultTemplate)
+
+    for index_file in range(len(pdf_list)):
+        try:
+            content_pdf = pdf_list[index_file]
+            # 輸出結果之檔名判斷，若已存在則補序號
+            file = os.path.splitext(content_pdf)[0]
+            ext = os.path.splitext(content_pdf)[1]
+            pdf_result=f'{file}_watermark{ext}'
+            i = 2
+            while os.path.exists(pdf_result):
+                pdf_result = f'{file}_watermark({i}){ext}'
+                i += 1
+            # 檔案若存在則合併,反之則標示錯誤並顯示錯誤訊息
+            isExist = os.path.exists(content_pdf)
+            if(isExist == True):
+                # 添加浮水印
+                # 處理中之暫存檔案
+                stamp_pdf= input_data["watermark_path"].iloc[0]
+                pdf_temp =  os.path.join(os.getcwd(),r"pwc_altreyx_temp.pdf")
+                # 是否處理所有頁數，目前預設為"是"
+                page_indices= "ALL" 
+                reader = PdfReader(content_pdf)
+                if page_indices == "ALL":
+                    page_indices = list(range(0, len(reader.pages)))
+
+                    writer = PdfWriter()
+                    for index_watermark in page_indices:
+                        content_page = reader.pages[index_watermark]
+                        mediabox = content_page.mediabox
+
+                        # You need to load it again, as the last time it was overwritten
+                        reader_stamp = PdfReader(stamp_pdf)
+                        image_page = reader_stamp.pages[0]
+
+                        image_page.merge_page(content_page)
+                        image_page.mediabox = mediabox
+                        writer.add_page(image_page)
+
+                    with open(pdf_temp, "wb") as fp:
+                        writer.write(fp)
+                        fp.close()
+
+                    # 接著開始處理文件頭提示
+                    black  = (0,0,0)
+                    # 字段切割處理
+                    strContent = "本資料係稿本@，僅供參考，不得移作其他用途。"
+                    strContentSplit = strContent.split("@")
+                    strPart1=strContentSplit[0]
+                    strPart2=strContentSplit[1]
+
+                    # 獲取當前日期
+                    currentDateAndTime = datetime.now()
+                    year = str(currentDateAndTime.year)
+                    month = str(currentDateAndTime.month)
+                    day = str(currentDateAndTime.day)
+                    hour = str(currentDateAndTime.hour)
+                    minute = str(currentDateAndTime.minute)
+                    second = str(currentDateAndTime.second)
+                    strTime="(" + year + "." + month + "." + day + " " + hour + ":" + minute + ":" + second + ")"
+
+                    # PDF總寬度
+                    total_width = 595
+
+                    # 提示字段Part1寬度
+                    strPart1_width = len(strPart1)*8
+                    # 提示字段Part2寬度
+                    strPart2_width = len(strPart2)*8
+                    # 時間字段寬度
+                    strTime_width = len(strTime)*5
+                    # 提示字段總寬度
+                    total_str_width = strPart1_width + strPart2_width + strTime_width
+
+                    # 字段之間的間距
+                    rect_margin = 5
+                    # 框線與字的間距
+                    rect_border_margin = 8
+                    # 文字框高度
+                    rect_height = 8
+                    # 文字框距離文件上方高度
+                    rect_top = 20
+
+                    # 最大可填字數計算
+                    # print((total_width-strTime_width-rect_border_margin*2-rect_margin*4)/8)
+
+                    # 計算part1文字框的 P1(x,y), P2(x,y)座標
+                    rect1_x1 = (total_width-total_str_width)/2
+                    rect1_y1 = rect_top
+                    rect1_x2 = rect1_x1 + strPart1_width + rect_margin
+                    rect1_y2 = rect_top + rect_height
+                    rect1 = fitz.Rect(rect1_x1,rect1_y1,rect1_x2,rect1_y2)
+
+                    # 計算time文字框的 P1(x,y), P2(x,y)座標
+                    rect_time_x1 = rect1_x2
+                    rect_time_y1 = rect_top
+                    rect_time_x2 = rect_time_x1 + strTime_width + rect_margin
+                    rect_time_y2 = rect_top + rect_height
+                    rect_time = fitz.Rect(rect_time_x1,rect_time_y1,rect_time_x2,rect_time_y2)
+
+                    # 計算part2文字框的 P1(x,y), P2(x,y)座標
+                    rect2_x1 = rect_time_x2
+                    rect2_y1 = rect_top
+                    rect2_x2 = rect2_x1 + strPart2_width + rect_margin
+                    rect2_y2 = rect_top + rect_height
+                    rect2 = fitz.Rect(rect2_x1,rect2_y1,rect2_x2,rect2_y2)
+
+                    # 外框
+                    rect_border_x1 = rect1_x1 - rect_border_margin
+                    rect_border_y1 = rect_top - rect_border_margin
+                    rect_border_x2 = rect2_x2 - rect_margin + rect_border_margin
+                    rect_border_y2 = rect_top + rect_height + rect_border_margin
+                    rect_border = fitz.Rect(rect_border_x1,rect_border_y1,rect_border_x2,rect_border_y2)
+
+                    pdfDoc = fitz.open(pdf_temp)
+                    for page in pdfDoc:
+                        # 添加外框
+                        annot_border = page.add_rect_annot(rect_border)
+                        annot_border.set_border(width=0.5)
+                        annot_border.set_colors(stroke=black)
+                        annot_border.update()
+                        # 添加第一部分字段(日期前字段)
+                        annot_part1 = page.add_freetext_annot(rect1, strPart1,fontsize=8,fontname="china-t",text_color=black,align=fitz.TEXT_ALIGN_CENTER)
+                        # 添加日期字段
+                        annot_time = page.add_freetext_annot(rect_time, strTime,fontsize=8,fontname="cour",text_color=black,align=fitz.TEXT_ALIGN_CENTER)
+                        # 添加第二部分字段(日期後字段)
+                        annot_part2 = page.add_freetext_annot(rect2, strPart2,fontsize=8,fontname="china-t",text_color=black,align=fitz.TEXT_ALIGN_CENTER)
+                    pdfDoc.save(pdf_result)
+                    pdfDoc.close()
+                    print(pdf_temp)
+                    if(os.path.exists(pdf_temp)):
+                        os.remove(pdf_temp)
+
+                    # 顯示成功與否
+                    resultData.at[index_file, "Status"] = "Success"
+                    resultData.at[index_file, "Message"] = ""
+                    resultData.at[index_file, "Output Path"] = pdf_result
+                else:
+                    raise Exception("該檔案不存在! " + pdf_list[index_file])
+        # 擷取個別檔案進行浮水印轉換時發生的錯誤
+        except Exception as e:
+            # 顯示成功與否
+            resultData.at[index_file, "Status"] = "Failure"
+            resultData.at[index_file, "Message"] = str(e)
+            resultData.at[index_file, "Output Path"] = ""
+
+# 擷取系統錯誤，若錯誤則所有檔案都顯示失敗
+except Exception as e:
+    # 顯示成功與否
+    resultData["Status"] = "Failure"
+    resultData["Message"] = str(e)
+    resultData["Output Path"] = ""
+Alteryx.write(resultData,1)
+
+
+#################################
+
+
+
+#################################
+</productionModeScript>
+          <Port>54325</Port>
+          <JupyterGuidDir>7640bca0-2c13-4d2c-8f32-4b068e3c7c0c</JupyterGuidDir>
+          <JupyterGuidCopy />
+          <LastExecutedByEngineVersion>2020.4.5.12471</LastExecutedByEngineVersion>
+          <Notebook><![CDATA[{"cells":[{"cell_type":"code","execution_count":46,"metadata":{"ayx":{"cell_class":"code_cell","cell_css":"border: 1px solid #58a; margin: 2px;","cell_type":"code","contents_keyword":"installPackages","first_line":"# List all non-standard packages to be imported by your","label":"deps"}},"outputs":[],"source":["# List all non-standard packages to be imported by your \n","# script here (only missing packages will be installed)\n","from ayx import Package\n","Package.installPackages(package=['pandas','PyPDF2'], install_type=\"install --user\")\n","Package.installPackages(package=['pymupdf'], install_type=\"install --user --upgrade\")"]},{"cell_type":"markdown","metadata":{"ayx":{"cell_class":"text_cell","cell_css":"border: 3px solid #357; margin: 4px; background: #fbffff","cell_type":"markdown","contents_keyword":"Alteryx.help()","first_line":"Run `Alteryx.help()` for info about useful functions.","label":"info"}},"source":["Run `Alteryx.help()` for info about useful functions.  \n","i.e., `Alteryx.read(\"#1\")`, `Alteryx.write(df,1)`, `Alteryx.getWorkflowConstant(\"Engine.WorkflowDirectory\")`"]},{"cell_type":"code","execution_count":2,"metadata":{"scrolled":false},"outputs":[],"source":["from ayx import Alteryx\n","from datetime import datetime\n","import pandas as pd\n","import os\n","import fitz\n","from PyPDF2 import PdfWriter, PdfReader\n","input_data = Alteryx.read(\"#1\")\n","\n","\n","try:\n","    # 讀取參數設定\n","    pdf_list= input_data['pdf_path']\n","    # 宣告輸出結果之pandas表格\n","    resultTemplate = {\n","        \"FilePath\": pdf_list\n","    }\n","    resultData = pd.DataFrame(resultTemplate)\n","\n","    for index_file in range(len(pdf_list)):\n","        try:\n","            content_pdf = pdf_list[index_file]\n","            # 輸出結果之檔名判斷，若已存在則補序號\n","            file = os.path.splitext(content_pdf)[0]\n","            ext = os.path.splitext(content_pdf)[1]\n","            pdf_result=f'{file}_watermark{ext}'\n","            i = 2\n","            while os.path.exists(pdf_result):\n","                pdf_result = f'{file}_watermark({i}){ext}'\n","                i += 1\n","            # 檔案若存在則合併,反之則標示錯誤並顯示錯誤訊息\n","            isExist = os.path.exists(content_pdf)\n","            if(isExist == True):\n","                # 添加浮水印\n","                # 處理中之暫存檔案\n","                stamp_pdf= input_data[\"watermark_path\"].iloc[0]\n","                pdf_temp =  os.path.join(os.getcwd(),r\"pwc_altreyx_temp.pdf\")\n","                # 是否處理所有頁數，目前預設為\"是\"\n","                page_indices= \"ALL\" \n","                reader = PdfReader(content_pdf)\n","                if page_indices == \"ALL\":\n","                    page_indices = list(range(0, len(reader.pages)))\n","\n","                    writer = PdfWriter()\n","                    for index_watermark in page_indices:\n","                        content_page = reader.pages[index_watermark]\n","                        mediabox = content_page.mediabox\n","\n","                        # You need to load it again, as the last time it was overwritten\n","                        reader_stamp = PdfReader(stamp_pdf)\n","                        image_page = reader_stamp.pages[0]\n","\n","                        image_page.merge_page(content_page)\n","                        image_page.mediabox = mediabox\n","                        writer.add_page(image_page)\n","\n","                    with open(pdf_temp, \"wb\") as fp:\n","                        writer.write(fp)\n","                        fp.close()\n","\n","                    # 接著開始處理文件頭提示\n","                    black  = (0,0,0)\n","                    # 字段切割處理\n","                    strContent = \"本資料係稿本@，僅供參考，不得移作其他用途。\"\n","                    strContentSplit = strContent.split(\"@\")\n","                    strPart1=strContentSplit[0]\n","                    strPart2=strContentSplit[1]\n","\n","                    # 獲取當前日期\n","                    currentDateAndTime = datetime.now()\n","                    year = str(currentDateAndTime.year)\n","                    month = str(currentDateAndTime.month)\n","                    day = str(currentDateAndTime.day)\n","                    hour = str(currentDateAndTime.hour)\n","                    minute = str(currentDateAndTime.minute)\n","                    second = str(currentDateAndTime.second)\n","                    strTime=\"(\" + year + \".\" + month + \".\" + day + \" \" + hour + \":\" + minute + \":\" + second + \")\"\n","\n","                    # PDF總寬度\n","                    total_width = 595\n","\n","                    # 提示字段Part1寬度\n","                    strPart1_width = len(strPart1)*8\n","                    # 提示字段Part2寬度\n","                    strPart2_width = len(strPart2)*8\n","                    # 時間字段寬度\n","                    strTime_width = len(strTime)*5\n","                    # 提示字段總寬度\n","                    total_str_width = strPart1_width + strPart2_width + strTime_width\n","\n","                    # 字段之間的間距\n","                    rect_margin = 5\n","                    # 框線與字的間距\n","                    rect_border_margin = 8\n","                    # 文字框高度\n","                    rect_height = 8\n","                    # 文字框距離文件上方高度\n","                    rect_top = 20\n","\n","                    # 最大可填字數計算\n","                    # print((total_width-strTime_width-rect_border_margin*2-rect_margin*4)/8)\n","\n","                    # 計算part1文字框的 P1(x,y), P2(x,y)座標\n","                    rect1_x1 = (total_width-total_str_width)/2\n","                    rect1_y1 = rect_top\n","                    rect1_x2 = rect1_x1 + strPart1_width + rect_margin\n","                    rect1_y2 = rect_top + rect_height\n","                    rect1 = fitz.Rect(rect1_x1,rect1_y1,rect1_x2,rect1_y2)\n","\n","                    # 計算time文字框的 P1(x,y), P2(x,y)座標\n","                    rect_time_x1 = rect1_x2\n","                    rect_time_y1 = rect_top\n","                    rect_time_x2 = rect_time_x1 + strTime_width + rect_margin\n","                    rect_time_y2 = rect_top + rect_height\n","                    rect_time = fitz.Rect(rect_time_x1,rect_time_y1,rect_time_x2,rect_time_y2)\n","\n","                    # 計算part2文字框的 P1(x,y), P2(x,y)座標\n","                    rect2_x1 = rect_time_x2\n","                    rect2_y1 = rect_top\n","                    rect2_x2 = rect2_x1 + strPart2_width + rect_margin\n","                    rect2_y2 = rect_top + rect_height\n","                    rect2 = fitz.Rect(rect2_x1,rect2_y1,rect2_x2,rect2_y2)\n","\n","                    # 外框\n","                    rect_border_x1 = rect1_x1 - rect_border_margin\n","                    rect_border_y1 = rect_top - rect_border_margin\n","                    rect_border_x2 = rect2_x2 - rect_margin + rect_border_margin\n","                    rect_border_y2 = rect_top + rect_height + rect_border_margin\n","                    rect_border = fitz.Rect(rect_border_x1,rect_border_y1,rect_border_x2,rect_border_y2)\n","\n","                    pdfDoc = fitz.open(pdf_temp)\n","                    for page in pdfDoc:\n","                        # 添加外框\n","                        annot_border = page.add_rect_annot(rect_border)\n","                        annot_border.set_border(width=0.5)\n","                        annot_border.set_colors(stroke=black)\n","                        annot_border.update()\n","                        # 添加第一部分字段(日期前字段)\n","                        annot_part1 = page.add_freetext_annot(rect1, strPart1,fontsize=8,fontname=\"china-t\",text_color=black,align=fitz.TEXT_ALIGN_CENTER)\n","                        # 添加日期字段\n","                        annot_time = page.add_freetext_annot(rect_time, strTime,fontsize=8,fontname=\"cour\",text_color=black,align=fitz.TEXT_ALIGN_CENTER)\n","                        # 添加第二部分字段(日期後字段)\n","                        annot_part2 = page.add_freetext_annot(rect2, strPart2,fontsize=8,fontname=\"china-t\",text_color=black,align=fitz.TEXT_ALIGN_CENTER)\n","                    pdfDoc.save(pdf_result)\n","                    pdfDoc.close()\n","                    print(pdf_temp)\n","                    if(os.path.exists(pdf_temp)):\n","                        os.remove(pdf_temp)\n","\n","                    # 顯示成功與否\n","                    resultData.at[index_file, \"Status\"] = \"Success\"\n","                    resultData.at[index_file, \"Message\"] = \"\"\n","                    resultData.at[index_file, \"Output Path\"] = pdf_result\n","                else:\n","                    raise Exception(\"該檔案不存在! \" + pdf_list[index_file])\n","        # 擷取個別檔案進行浮水印轉換時發生的錯誤\n","        except Exception as e:\n","            # 顯示成功與否\n","            resultData.at[index_file, \"Status\"] = \"Failure\"\n","            resultData.at[index_file, \"Message\"] = str(e)\n","            resultData.at[index_file, \"Output Path\"] = \"\"\n","\n","# 擷取系統錯誤，若錯誤則所有檔案都顯示失敗\n","except Exception as e:\n","    # 顯示成功與否\n","    resultData[\"Status\"] = \"Failure\"\n","    resultData[\"Message\"] = str(e)\n","    resultData[\"Output Path\"] = \"\"\n","Alteryx.write(resultData,1)"]},{"cell_type":"code","execution_count":null,"metadata":{},"outputs":[],"source":[]},{"cell_type":"code","execution_count":null,"metadata":{},"outputs":[],"source":[]}],"metadata":{"kernelspec":{"display_name":"jupytertool_venv","language":"python","name":"jupytertool_venv"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.8.5"}},"nbformat":4,"nbformat_minor":2}]]></Notebook>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxJupyterPluginEngine.dll" EngineDllEntryPoint="AlteryxJupyter" />
+    </Node>
+    <Node ToolID="20">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Formula.Formula">
+        <Position x="186" y="78" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <FormulaFields>
+            <FormulaField expression="FileGetDir(FileGetDir([Engine.WorkflowDirectory])) + &quot;watermark.pdf&quot;" field="watermark_path" size="1073741823" type="V_WString" />
+          </FormulaFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>watermark_path = FileGetDir(FileGetDir([Engine.WorkflowDirectory])) + "watermark...</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+        <MetaInfo connection="Output">
+          <RecordInfo>
+            <Field name="pdf_path" size="33" source="TextInput:" type="String" />
+            <Field name="watermark_path" size="1073741823" source="Formula: FileGetDir(FileGetDir([Engine.WorkflowDirectory])) + &quot;watermark.pdf&quot;" type="V_WString" />
+          </RecordInfo>
+        </MetaInfo>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxFormula" />
+    </Node>
+  </Nodes>
+  <Connections>
+    <Connection>
+      <Origin ToolID="3" Connection="Output" />
+      <Destination ToolID="20" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="19" Connection="Output1" />
+      <Destination ToolID="7" Connection="Input" />
+    </Connection>
+    <Connection name="#1">
+      <Origin ToolID="20" Connection="Output" />
+      <Destination ToolID="19" Connection="Input" />
+    </Connection>
+  </Connections>
+  <Properties>
+    <Memory default="True" />
+    <GlobalRecordLimit value="0" />
+    <TempFiles default="True" />
+    <Annotation on="True" includeToolName="False" />
+    <ConvErrorLimit value="10" />
+    <ConvErrorLimit_Stop value="False" />
+    <CancelOnError value="False" />
+    <DisableBrowse value="False" />
+    <EnablePerformanceProfiling value="False" />
+    <DisableAllOutput value="False" />
+    <ShowAllMacroMessages value="False" />
+    <ShowConnectionStatusIsOn value="True" />
+    <ShowConnectionStatusOnlyWhenRunning value="True" />
+    <ZoomLevel value="0" />
+    <LayoutType>Horizontal</LayoutType>
+    <MetaInfo>
+      <NameIsFileName value="True" />
+      <Name>entry</Name>
+      <Description />
+      <RootToolName />
+      <ToolVersion />
+      <ToolInDb value="False" />
+      <CategoryName />
+      <SearchTags />
+      <Author />
+      <Company />
+      <Copyright />
+      <DescriptionLink actual="" displayed="" />
+      <Example>
+        <Description />
+        <File />
+      </Example>
+    </MetaInfo>
+    <Events>
+      <Enabled value="False" />
+    </Events>
+    <RuntimeProperties>
+      <Actions />
+      <Questions>
+        <Question>
+          <Type>Tab</Type>
+          <Description>Questions</Description>
+          <Name>Tab (1)</Name>
+          <ToolId value="1" />
+          <Questions>
+            <Question>
+              <Type>MacroOutput</Type>
+              <Description />
+              <Name>Output</Name>
+              <ToolId value="7" />
+            </Question>
+            <Question>
+              <Type>MacroInput</Type>
+              <Description />
+              <Name>Input</Name>
+              <ToolId value="3" />
+            </Question>
+          </Questions>
+        </Question>
+      </Questions>
+      <ModuleType>Macro</ModuleType>
+      <MacroCustomHelp value="False" />
+      <MacroDynamicOutputFields value="False" />
+      <MacroImageStd value="39" />
+      <MacroInputs />
+      <MacroOutputs />
+      <Wiz_CustomHelp value="False" />
+      <Wiz_CustomGraphic value="False" />
+      <Wiz_ShowOutput value="True" />
+      <Wiz_OpenOutputTools>
+        <Tool ToolId="3" Selected="True" />
+        <Tool ToolId="7" Selected="True" />
+      </Wiz_OpenOutputTools>
+      <Wiz_OutputMessage />
+      <Wiz_NoOutputFilesMessage />
+      <Wiz_ChainRunWizard />
+    </RuntimeProperties>
+  </Properties>
+</AlteryxDocument>

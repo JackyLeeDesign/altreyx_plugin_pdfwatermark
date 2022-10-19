@@ -1,0 +1,377 @@
+<?xml version="1.0"?>
+<AlteryxDocument yxmdVer="2020.4">
+  <Nodes>
+    <Node ToolID="1">
+      <GuiSettings Plugin="AlteryxGuiToolkit.Questions.Tab.Tab">
+        <Position x="0" y="0" width="59" height="59" />
+      </GuiSettings>
+      <Properties>
+        <Configuration />
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+    </Node>
+    <Node ToolID="3">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.TextInput.TextInput">
+        <Position x="162" y="246" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <NumRows value="1" />
+          <Fields>
+            <Field name="pdf_path" />
+            <Field name="status" />
+          </Fields>
+          <Data>
+            <r>
+              <c>C:\Users\JYKL\Desktop\testPDF.pdf</c>
+              <c />
+            </r>
+          </Data>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+        <MetaInfo connection="Output">
+          <RecordInfo>
+            <Field name="pdf_path" size="33" source="TextInput:" type="String" />
+            <Field name="status" source="TextInput:" type="Bool" />
+          </RecordInfo>
+        </MetaInfo>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxTextInput" />
+    </Node>
+    <Node ToolID="7">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.MacroOutput.MacroOutput">
+        <Position x="534" y="246" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Name>Output</Name>
+          <Abbrev />
+        </Configuration>
+        <Annotation DisplayMode="1">
+          <Name>Output</Name>
+          <DefaultAnnotationText>Output</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxMacroOutput" />
+    </Node>
+    <Node ToolID="19">
+      <GuiSettings Plugin="JupyterCode">
+        <Position x="354" y="246" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <WorkflowName>c:\users\jykl\desktop\alteryx\altreyx_ait_components\altreyx_plugin_pdfwatermark\alteryx_src\supporting_macros\entry.yxmc</WorkflowName>
+          <JupyterProduction>true</JupyterProduction>
+          <vEnvName>jupytertool_venv</vEnvName>
+          <DefaultVenv>1</DefaultVenv>
+          <productionModeScript>#################################
+# List all non-standard packages to be imported by your 
+# script here (only missing packages will be installed)
+from ayx import Package
+
+Package.installPackages(package=['pandas','PyPDF2'], install_type="install --user")
+
+
+#################################
+from ayx import Alteryx
+import pandas as pd
+from PyPDF2 import PdfWriter, PdfReader
+input_data = Alteryx.read("#1")
+try:
+    # 讀取參數設定
+    content_pdf= input_data['pdf_path'].iloc[0]
+    stamp_pdf= input_data['watermark_path'].iloc[0]
+    pdf_result= input_data['output_path'].iloc[0]
+    page_indices= "ALL"
+
+    reader = PdfReader(content_pdf)
+    if page_indices == "ALL":
+        page_indices = list(range(0, len(reader.pages)))
+
+        writer = PdfWriter()
+        for index in page_indices:
+            content_page = reader.pages[index]
+            mediabox = content_page.mediabox
+
+            # You need to load it again, as the last time it was overwritten
+            reader_stamp = PdfReader(stamp_pdf)
+            image_page = reader_stamp.pages[0]
+
+            image_page.merge_page(content_page)
+            image_page.mediabox = mediabox
+            writer.add_page(image_page)
+
+    input_data["status"] = "Success：" + str(pdf_result)
+except Exception as e:
+    input_data["status"] = "Failure：" + str(e)
+Alteryx.write(input_data,1)
+
+
+#################################
+</productionModeScript>
+          <Port>55245</Port>
+          <JupyterGuidDir>7640bca0-2c13-4d2c-8f32-4b068e3c7c0c</JupyterGuidDir>
+          <JupyterGuidCopy />
+          <LastExecutedByEngineVersion>2020.4.5.12471</LastExecutedByEngineVersion>
+          <Notebook><![CDATA[{"cells":[{"cell_type":"markdown","metadata":{"ayx":{"cell_class":"text_cell","cell_css":"border: 3px solid #357; margin: 4px; background: #fbffff","cell_type":"markdown","contents_keyword":"Alteryx.help()","first_line":"Run `Alteryx.help()` for info about useful functions.","label":"info"}},"source":["Run `Alteryx.help()` for info about useful functions.  \n","i.e., `Alteryx.read(\"#1\")`, `Alteryx.write(df,1)`, `Alteryx.getWorkflowConstant(\"Engine.WorkflowDirectory\")`"]},{"cell_type":"code","execution_count":1,"metadata":{"ayx":{"cell_class":"code_cell","cell_css":"border: 1px solid #58a; margin: 2px;","cell_type":"code","contents_keyword":"installPackages","first_line":"# List all non-standard packages to be imported by your","label":"deps"}},"outputs":[],"source":["# List all non-standard packages to be imported by your \n","# script here (only missing packages will be installed)\n","from ayx import Package\n","\n","Package.installPackages(package=['pandas','PyPDF2'], install_type=\"install --user\")"]},{"cell_type":"code","execution_count":2,"metadata":{"scrolled":false},"outputs":[],"source":["from ayx import Alteryx\n","import pandas as pd\n","from PyPDF2 import PdfWriter, PdfReader\n","input_data = Alteryx.read(\"#1\")\n","try:\n","    # 讀取參數設定\n","    content_pdf= input_data['pdf_path'].iloc[0]\n","    stamp_pdf= input_data['watermark_path'].iloc[0]\n","    pdf_result= input_data['output_path'].iloc[0]\n","    page_indices= \"ALL\"\n","\n","    reader = PdfReader(content_pdf)\n","    if page_indices == \"ALL\":\n","        page_indices = list(range(0, len(reader.pages)))\n","\n","        writer = PdfWriter()\n","        for index in page_indices:\n","            content_page = reader.pages[index]\n","            mediabox = content_page.mediabox\n","\n","            # You need to load it again, as the last time it was overwritten\n","            reader_stamp = PdfReader(stamp_pdf)\n","            image_page = reader_stamp.pages[0]\n","\n","            image_page.merge_page(content_page)\n","            image_page.mediabox = mediabox\n","            writer.add_page(image_page)\n","\n","    input_data[\"status\"] = \"Success：\" + str(pdf_result)\n","except Exception as e:\n","    input_data[\"status\"] = \"Failure：\" + str(e)\n","Alteryx.write(input_data,1)"]},{"cell_type":"code","execution_count":null,"metadata":{},"outputs":[],"source":[]}],"metadata":{"kernelspec":{"display_name":"jupytertool_venv","language":"python","name":"jupytertool_venv"},"language_info":{"codemirror_mode":{"name":"ipython","version":3},"file_extension":".py","mimetype":"text/x-python","name":"python","nbconvert_exporter":"python","pygments_lexer":"ipython3","version":"3.8.5"}},"nbformat":4,"nbformat_minor":2}]]></Notebook>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxJupyterPluginEngine.dll" EngineDllEntryPoint="AlteryxJupyter" />
+    </Node>
+    <Node ToolID="20">
+      <GuiSettings Plugin="AlteryxGuiToolkit.Error.Error">
+        <Position x="54" y="174" width="59" height="59" />
+      </GuiSettings>
+      <Properties>
+        <Configuration />
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>[#1]&amp;&amp;[#2]&amp;&amp;([#3])
+必填欄位未輸入完整, 請輸入完後再執行</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+    </Node>
+    <Node ToolID="23">
+      <GuiSettings Plugin="AlteryxGuiToolkit.Action.Action">
+        <Position x="162" y="174" width="59" height="59" />
+      </GuiSettings>
+      <Properties>
+        <Configuration />
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>Update Value</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+    </Node>
+    <Node ToolID="24">
+      <GuiSettings Plugin="AlteryxGuiToolkit.Questions.FileBrowse.FileBrowse">
+        <Position x="54" y="54" width="59" height="59" />
+      </GuiSettings>
+      <Properties>
+        <Configuration />
+        <Annotation DisplayMode="0">
+          <Name>pdf_path</Name>
+          <DefaultAnnotationText>pdf_path</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+    </Node>
+    <Node ToolID="25">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Formula.Formula">
+        <Position x="258" y="246" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <FormulaFields>
+            <FormulaField expression="FileAddPaths(FileGetDir(FileGetDir([Engine.WorkflowDirectory])), &quot;watermark.pdf&quot;)" field="watermark_path" size="1073741823" type="V_WString" />
+            <FormulaField expression="Replace([pdf_path], &quot;.pdf&quot;, &quot;_result.pdf&quot;)" field="output_path" size="1073741823" type="V_WString" />
+          </FormulaFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>watermark_path = FileAddPaths(FileGetDir(FileGetDir([Engine.WorkflowDirectory]))...</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+        <MetaInfo connection="Output">
+          <RecordInfo>
+            <Field name="pdf_path" size="33" source="TextInput:" type="String" />
+            <Field name="status" source="TextInput:" type="Bool" />
+            <Field name="watermark_path" size="1073741823" source="Formula: FileAddPaths(FileGetDir(FileGetDir([Engine.WorkflowDirectory])), &quot;watermark.pdf&quot;)" type="V_WString" />
+            <Field name="output_path" size="1073741823" source="Formula: Replace([pdf_path], &quot;.pdf&quot;, &quot;_result.pdf&quot;)" type="V_WString" />
+          </RecordInfo>
+        </MetaInfo>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxFormula" />
+    </Node>
+    <Node ToolID="26">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.AlteryxSelect.AlteryxSelect">
+        <Position x="450" y="246" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <OrderChanged value="False" />
+          <CommaDecimal value="False" />
+          <SelectFields>
+            <SelectField field="watermark_path" selected="False" />
+            <SelectField field="*Unknown" selected="True" />
+          </SelectFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+        <MetaInfo connection="Output">
+          <RecordInfo>
+            <Field name="pdf_path" size="1073741823" source="PythonTool:" type="V_WString" />
+            <Field name="status" size="1073741823" source="PythonTool:" type="V_WString" />
+            <Field name="output_path" size="1073741823" source="PythonTool:" type="V_WString" />
+          </RecordInfo>
+        </MetaInfo>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxSelect" />
+    </Node>
+  </Nodes>
+  <Connections>
+    <Connection>
+      <Origin ToolID="3" Connection="Output" />
+      <Destination ToolID="25" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="19" Connection="Output1" />
+      <Destination ToolID="26" Connection="Input" />
+    </Connection>
+    <Connection name="#2">
+      <Origin ToolID="23" Connection="Action" />
+      <Destination ToolID="3" Connection="Action" />
+    </Connection>
+    <Connection name="#1">
+      <Origin ToolID="24" Connection="Question" />
+      <Destination ToolID="23" Connection="Question" />
+    </Connection>
+    <Connection name="#1">
+      <Origin ToolID="24" Connection="Question" />
+      <Destination ToolID="20" Connection="Question" />
+    </Connection>
+    <Connection name="#1">
+      <Origin ToolID="25" Connection="Output" />
+      <Destination ToolID="19" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="26" Connection="Output" />
+      <Destination ToolID="7" Connection="Input" />
+    </Connection>
+  </Connections>
+  <Properties>
+    <Memory default="True" />
+    <GlobalRecordLimit value="0" />
+    <TempFiles default="True" />
+    <Annotation on="True" includeToolName="False" />
+    <ConvErrorLimit value="10" />
+    <ConvErrorLimit_Stop value="False" />
+    <CancelOnError value="False" />
+    <DisableBrowse value="False" />
+    <EnablePerformanceProfiling value="False" />
+    <DisableAllOutput value="False" />
+    <ShowAllMacroMessages value="False" />
+    <ShowConnectionStatusIsOn value="True" />
+    <ShowConnectionStatusOnlyWhenRunning value="True" />
+    <ZoomLevel value="0" />
+    <LayoutType>Horizontal</LayoutType>
+    <Constants>
+      <Constant>
+        <Namespace>Question</Namespace>
+        <Name>pdf_path</Name>
+        <Value />
+        <IsNumeric value="False" />
+      </Constant>
+    </Constants>
+    <MetaInfo>
+      <NameIsFileName value="True" />
+      <Name>entry</Name>
+      <Description />
+      <RootToolName />
+      <ToolVersion />
+      <ToolInDb value="False" />
+      <CategoryName />
+      <SearchTags />
+      <Author />
+      <Company />
+      <Copyright />
+      <DescriptionLink actual="" displayed="" />
+      <Example>
+        <Description />
+        <File />
+      </Example>
+    </MetaInfo>
+    <Events>
+      <Enabled value="True" />
+    </Events>
+    <RuntimeProperties>
+      <Actions>
+        <NoCondition>
+          <Type>NoCondition</Type>
+          <Description>(Always Run)</Description>
+          <True>
+            <Action>
+              <Type>Error</Type>
+              <Description>尚未選擇PDF檔案，請重新確認後再執行</Description>
+              <ToolId value="20" />
+              <Expression>[#1]==""</Expression>
+            </Action>
+            <Action>
+              <Type>Dynamic</Type>
+              <Description />
+              <ToolId value="23" />
+              <Expression>{{INPUT}}</Expression>
+              <Destination>3/Data/r[1]/c[1]</Destination>
+              <Mapping>Update Cell</Mapping>
+              <Mode>Expression</Mode>
+              <DynamicConfiguration>row	1
+column	1</DynamicConfiguration>
+              <DefaultConfiguration value="True" />
+            </Action>
+          </True>
+        </NoCondition>
+      </Actions>
+      <Questions>
+        <Question>
+          <Type>Tab</Type>
+          <Description>Questions</Description>
+          <Name>Tab (1)</Name>
+          <ToolId value="1" />
+          <Questions>
+            <Question>
+              <Type>MacroOutput</Type>
+              <Description />
+              <Name>Output</Name>
+              <ToolId value="7" />
+            </Question>
+            <Question>
+              <Type>FileBrowse</Type>
+              <Description>欲加浮水印的PDF檔案路徑</Description>
+              <Name>pdf_path</Name>
+              <ToolId value="24" />
+              <SaveAs value="False" />
+              <Mode>DW2</Mode>
+              <DW2_SpatialOnly value="False" />
+              <DW2_FieldMap value="False" />
+              <InputToolId value="-1" />
+            </Question>
+          </Questions>
+        </Question>
+      </Questions>
+      <ModuleType>Macro</ModuleType>
+      <MacroCustomHelp value="False" />
+      <MacroDynamicOutputFields value="False" />
+      <MacroImageStd value="39" />
+      <MacroInputs />
+      <MacroOutputs />
+      <Wiz_CustomHelp value="False" />
+      <Wiz_CustomGraphic value="False" />
+      <Wiz_ShowOutput value="True" />
+      <Wiz_OpenOutputTools>
+        <Tool ToolId="7" Selected="True" />
+      </Wiz_OpenOutputTools>
+      <Wiz_OutputMessage />
+      <Wiz_NoOutputFilesMessage />
+      <Wiz_ChainRunWizard />
+    </RuntimeProperties>
+  </Properties>
+</AlteryxDocument>

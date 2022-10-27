@@ -3,20 +3,20 @@
   <EngineSettings EngineDllEntryPoint="PDFWatermark\Supporting_Macros\entry.yxmc" EngineDll="Macro" SDKVersion="10.1" />
   
   <GuiSettings Help="" Html="index.html" Icon="icon.png" SDKVersion="10.1">
-    <!-- <InputConnections>
+    <InputConnections>
       <Connection Name="Input" AllowMultiple="False" Optional="False" Type="Connection" Label="I"/>
-    </InputConnections> -->
+    </InputConnections>
     <OutputConnections>
       <Connection Name="Output" AllowMultiple="False" Optional="False" Type="Connection" Label="O"/>
     </OutputConnections>
   </GuiSettings>
   <Properties>
     <MetaInfo>
-      <Name>PDF合併</Name>
-      <Description>將指定資料夾內多個PDF檔案合併為單一PDF檔。</Description>
+      <Name>PDF浮水印</Name>
+      <Description>將指定PDF檔添加浮水印。</Description>
       <CategoryName>PwC Data Tools</CategoryName>
       <SearchTags>pwc</SearchTags>
-      <ToolVersion>0.0.1</ToolVersion>
+      <ToolVersion>0.1.0</ToolVersion>
       <Author>​Assurance Innovation and Transformation</Author>
       <Company>PricewaterhouseCoopers Taiwan</Company>
       <Copyright>PricewaterhouseCoopers Taiwan 2022</Copyright>

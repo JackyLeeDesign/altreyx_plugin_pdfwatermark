@@ -41,7 +41,7 @@ archive.on('error', function(err) {
 archive.pipe(output);
 
 //Add files and directory into archive
-archive.directory(path.join(__dirname,"PDFWatermark","PDFMPDFWatermarkerge"),"PDFWatermark")
+archive.directory(path.join(__dirname,"PDFWatermark","PDFWatermark"),"PDFWatermark")
 archive.glob('Config.xml', {cwd:path.join(__dirname,"PDFWatermark")});
 
 archive.finalize();

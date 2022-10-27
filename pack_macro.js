@@ -23,7 +23,7 @@ console.log("Macros:",macros)
 if (process.env.NODE_ENV == 'production'){
     //Pack Macro
     macros.forEach(element=>{
-        let cmd = ` "${alteryx_path}"  /Encrypt "${source_path}\\${element}" "${dest_path}\\${element}"`
+        let cmd = ` "${alteryx_path}"  /Lock "${source_path}\\${element}" "${dest_path}\\${element}"`
         cmds.push(cmd)
     })
 } else {

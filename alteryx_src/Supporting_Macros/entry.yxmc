@@ -247,8 +247,11 @@
           <OrderChanged value="False" />
           <CommaDecimal value="False" />
           <SelectFields>
-            <SelectField field="FilePath" selected="False" />
-            <SelectField field="*Unknown" selected="True" />
+            <SelectField field="Source File" selected="True" />
+            <SelectField field="Status" selected="True" />
+            <SelectField field="Message" selected="True" />
+            <SelectField field="Output Path" selected="True" />
+            <SelectField field="*Unknown" selected="False" />
           </SelectFields>
         </Configuration>
         <Annotation DisplayMode="0">
@@ -627,8 +630,7 @@ column	1</DynamicConfiguration>
               <Description>必填欄位未輸入完整, 請輸入完後再執行</Description>
               <ToolId value="16" />
               <Expression>([#1] == "" and ![#3]) or
-([#4] == "" and [#3]) or
-[#2] == ""</Expression>
+([#4] == "" and [#3])</Expression>
             </Action>
             <Action>
               <Type>Dynamic</Type>

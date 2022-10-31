@@ -70,9 +70,9 @@
           <div class="card-body" style="overflow-x:auto;">
             <label for="exampleFormControlInput1" class="form-label"><b>
                 <BIconColumns style="vertical-align:text-top;" class="icon" /> 此內容將顯示於每一頁頂部提示訊息框，當前日期則使用"＠"代替。
-                <div class="mt-3">參考範例：</div>
-                <div>若輸入 "<span style="color:orangered;">本資料係稿本@，僅供參考，不得移作其他用途。</span>"</div>
-                <div>則呈限於頂部提示框內容如下</div>
+                <div class="mt-3">此欄位不得為空，預設內容為 ：</div>
+                <div>"<span style="color:orangered;">本資料係稿本@，僅供參考，不得移作其他用途。</span>"</div>
+                <div>呈限於頂部提示框內容如下</div>
                 <img src="./step_2_1.png" style="width: 80%;max-width:650px;">
                 <!-- "<span style="color:orangered">本資料係稿本 (YYYY.MM.DD hh:mm:ss) ，僅供參考，不得移作其他用途。</span>" -->
               </b></label>
@@ -126,7 +126,7 @@ export default {
       connectInputPathMapping: "",
       input_isConnectFile: false,
       pdf_path: "",
-      input_annot: "本資料係稿本@，僅供參考，不得移作其他用途。",
+      input_annot: "",
       str_columns: [],
       val_columns: [],
       help_1: false
@@ -180,11 +180,18 @@ export default {
           var pdf_path = new AlteryxDataItems.SimpleString('pdf_path')
           manager.addDataItem(pdf_path)
           manager.bindDataItemToWidget(pdf_path, 'pdf_path')
+          
+          manager.getDataItem('input_annot').setValue("本資料係稿本@，僅供參考，不得移作其他用途。")
         }
         //Load Settings
         window.Alteryx.Gui.AfterLoad = function (manager) {
           //Set WorkflowDirectory
-          this.input_annot = manager.getDataItem("input_annot").getValue()
+          let altreyx_input_annot = manager.getDataItem('input_annot').getValue()
+          if(!altreyx_input_annot){
+            this.input_annot = "本資料係稿本@，僅供參考，不得移作其他用途。"
+          }else {
+            this.input_annot = manager.getDataItem("input_annot").getValue()
+          }
           // this.pdf_page = manager.getDataItem("pdf_page").getValue()
           // this.pdf_isToDoAll = manager.getDataItem("pdf_isToDoAll").getValue()
           this.connectInputPathMapping = manager.getDataItem("connectInputPathMapping").getValue()

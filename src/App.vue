@@ -15,10 +15,10 @@
       <div class="col">
         <!-- 第一步 -->
         <div class="card" style="margin-top:10px;">
-          <div class="card-header d-flex justify-content-between align-items-center"><b>Step1：請選擇欲添加浮水印的PDF檔</b></div>
+          <div class="card-header d-flex justify-content-between align-items-center"><b>Step1：請選擇欲添加浮水印的 PDF 檔</b></div>
           <div class="card-body" style="overflow-x:auto;">
             <label for="exampleFormControlInput1" class="form-label"><b>
-                <BIconFiles style="vertical-align:text-top;" class="icon" />本元件將指定PDF檔添加浮水印。
+                <BIconFiles style="vertical-align:text-top;" class="icon" />本元件將指定 PDF 檔添加浮水印。
               </b></label>
             <button type="button" class="btn" style="padding:0px;" v-on:click="help_1 = !help_1">
               <span v-if="!help_1">
@@ -31,7 +31,7 @@
             <br>
             <div v-if="help_1">
               <div class="mb-3" style="display:grid;justify-content:space-around;">
-                <label class="form-label"><b>1.可於元件前連結其他元件或直接選擇PDF檔案，若您是直接選擇PDF檔案則可跳過2~3步驟。</b></label>
+                <label class="form-label"><b>1.可於元件前連結其他元件或直接選擇 PDF 檔案，若您是直接選擇 PDF 檔案則可跳過 2~3 步驟。</b></label>
                 <img src="./step_1_1.png" style="width: 100%;max-width:650px;">
               </div>
               <div class="mb-3" style="display:grid;justify-content:space-around;">
@@ -45,7 +45,7 @@
                 <img src="./step_1_3.png" style="width: 100%;max-width:650px;">
               </div>
               <div class="mb-3" style="display:grid;justify-content:space-around;">
-                <label class="form-label"><b>若前面接的是PDF合併元件或PDF轉置元件，按同樣邏輯，我們選擇路徑欄位 Output Path 即可。</b></label>
+                <label class="form-label"><b>若前面接的是 PDF 合併元件或 PDF 轉置元件，按同樣邏輯，我們選擇路徑欄位 Output Path 即可。</b></label>
                 <img src="./step_1_4.png" style="width: 100%;max-width:650px;">
               </div>
             </div>
@@ -54,7 +54,7 @@
             </ayx>
             <div class="mb-3">
               <label v-if="input_isConnectFile === true" for="exampleFormControlInput1" class="form-label"><b>
-                  <BIconColumns style="vertical-align:text-top;" class="icon" />根據您所連接的檔案，請選擇其路徑欄位
+                  <BIconColumns style="vertical-align:text-top;" class="icon" />根據您所連接的檔案，請選擇其輸出路徑 (Output) 欄位
                 </b></label>
               <select v-if="input_isConnectFile === true" class="form-control" v-model="connectInputPathMapping">
                 <option disabled value="">選擇欄位</option>
@@ -74,6 +74,8 @@
                 <div>"<span style="color:orangered;">本資料係稿本@，僅供參考，不得移作其他用途。</span>"</div>
                 <div>呈限於頂部提示框內容如下</div>
                 <img src="./step_2_1.png" style="width: 80%;max-width:650px;">
+                <div>同時會於 PDF 頁面中間處添加 "DRAFT" 字樣浮水印</div>
+                <img src="./step_2_2.png" style="width: 80%;max-width:650px;">
                 <!-- "<span style="color:orangered">本資料係稿本 (YYYY.MM.DD hh:mm:ss) ，僅供參考，不得移作其他用途。</span>" -->
               </b></label>
             <input type="text" id="exampleFormControlInput1" class="form-control" placeholder="輸入提示訊息"
@@ -85,7 +87,7 @@
   </div>
 
   <footer class="footer mt-auto">
-    <p class="text-muted" style="margin: 0px;text-align: center;">版本：0.1.0</p>
+    <p class="text-muted" style="margin: 0px;text-align: center;">版本：0.1.3</p>
   </footer>
 
 </template>

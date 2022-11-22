@@ -3,8 +3,8 @@
   <Properties>
     <MetaInfo>
       <Name>PDF 浮水印</Name>
-      <Description>將指定 PDF 檔添加浮水印。</Description>
-      <ToolVersion>0.1.3</ToolVersion>
+      <Description>將指定 PDF 檔添加浮水印。(註:請關閉所有正在執行之工具 workflow，再執行安裝)</Description>
+      <ToolVersion>0.1.4</ToolVersion>
       <CategoryName>PwC Data Tools</CategoryName>
       <Author>Assurance Innovation and Transformation</Author>
       <Icon>PDFWatermark/icon.png</Icon>

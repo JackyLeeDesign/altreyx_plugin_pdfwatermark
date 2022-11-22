@@ -68,18 +68,29 @@
         <div class="card" style="margin-top:10px;">
           <div class="card-header d-flex justify-content-between align-items-center"><b>Step2：請輸入浮水印提示訊息</b></div>
           <div class="card-body" style="overflow-x:auto;">
-            <label for="exampleFormControlInput1" class="form-label"><b>
-                <BIconColumns style="vertical-align:text-top;" class="icon" /> 此內容將顯示於每一頁頂部提示訊息框，當前日期則使用"＠"代替。
-                <div class="mt-3">此欄位不得為空，預設內容為 ：</div>
-                <div>"<span style="color:orangered;">本資料係稿本@，僅供參考，不得移作其他用途。</span>"</div>
-                <div>呈限於頂部提示框內容如下</div>
-                <img src="./step_2_1.png" style="width: 80%;max-width:650px;">
-                <div>同時會於 PDF 頁面中間處添加 "DRAFT" 字樣浮水印</div>
-                <img src="./step_2_2.png" style="width: 80%;max-width:650px;">
-                <!-- "<span style="color:orangered">本資料係稿本 (YYYY.MM.DD hh:mm:ss) ，僅供參考，不得移作其他用途。</span>" -->
-              </b></label>
-            <input type="text" id="exampleFormControlInput1" class="form-control" placeholder="輸入提示訊息"
-              v-model="input_annot">
+            <div class="form-check form-check-inline mb-2">
+              <input type="checkbox" class="form-check-input" v-model="input_isNeedAnnot" />
+              <label for="exampleFormControlInput3" class="form-check-label"><b>
+                  添加頂部提示
+                </b></label>
+            </div>
+            <div v-if="input_isNeedAnnot.toString()=='true'" class="mb-3">
+              <div>
+              <BIconColumns style="vertical-align:text-top;" class="icon" /> 頂部提示</div>
+              <label for="exampleFormControlInput1" class="form-label"><b>
+                  <div>此內容將顯示於每一頁頂部提示訊息框，當前日期則使用"＠"代替。</div>
+                  <div class="mt-2">預設內容為 ：</div>
+                  <div>"<span style="color:orangered;">本資料係稿本@，僅供參考，不得移作其他用途。</span>"</div>
+                  <div>呈限於頂部提示框內容如下</div>
+                  <img src="./step_2_1.png" style="width: 80%;max-width:650px;">
+                </b></label>
+              <input type="text" id="exampleFormControlInput1" class="form-control" placeholder="輸入提示訊息"
+                v-model="input_annot">
+            </div>
+            <div>
+            <BIconColumns style="vertical-align:text-top;" class="icon" /> 浮水印
+            <div>PDF 頁面中間處添加 "DRAFT" 字樣浮水印，如下圖所示: </div>
+            <img src="./step_2_2.png" style="width: 80%;max-width:650px;"></div>
           </div>
         </div>
       </div>
@@ -87,7 +98,8 @@
   </div>
 
   <footer class="footer mt-auto">
-    <p class="text-muted" style="margin: 0px;text-align: center;">版本：0.1.3</p>
+    <p class="text-muted" style="margin: 0px;text-align: center;">版本：0.1.4</p>
+    <p class="text-muted" style="margin: 0px;text-align: center; font-size:10px;">Copyright © 2001-2022 Python Software Foundation; All Rights Reserved.</p>
   </footer>
 
 </template>
@@ -131,12 +143,21 @@ export default {
       input_annot: "",
       str_columns: [],
       val_columns: [],
-      help_1: false
+      help_1: false,
+      input_isNeedAnnot: ""
     }
   },
   components: {
   },
   watch: {
+    input_isNeedAnnot: {
+      handler(val) {
+        if (typeof window.Alteryx !== 'undefined') {
+          window.Alteryx.Gui.Manager.getDataItem("input_isNeedAnnot").setValue(val)
+        }
+      },
+      deep: true
+    },
     input_isConnectFile: {
       handler(val) {
         if (typeof window.Alteryx !== 'undefined') {
@@ -179,25 +200,28 @@ export default {
           manager.addDataItem(connectInputPathMapping)
           var input_isConnectFile = new AlteryxDataItems.SimpleBool('input_isConnectFile')
           manager.addDataItem(input_isConnectFile)
+          var input_isNeedAnnot = new AlteryxDataItems.SimpleString('input_isNeedAnnot')
+          manager.addDataItem(input_isNeedAnnot)
           var pdf_path = new AlteryxDataItems.SimpleString('pdf_path')
           manager.addDataItem(pdf_path)
           manager.bindDataItemToWidget(pdf_path, 'pdf_path')
-          
+
           manager.getDataItem('input_annot').setValue("本資料係稿本@，僅供參考，不得移作其他用途。")
         }
         //Load Settings
         window.Alteryx.Gui.AfterLoad = function (manager) {
           //Set WorkflowDirectory
           let altreyx_input_annot = manager.getDataItem('input_annot').getValue()
-          if(!altreyx_input_annot){
+          if (!altreyx_input_annot) {
             this.input_annot = "本資料係稿本@，僅供參考，不得移作其他用途。"
-          }else {
+          } else {
             this.input_annot = manager.getDataItem("input_annot").getValue()
           }
           // this.pdf_page = manager.getDataItem("pdf_page").getValue()
           // this.pdf_isToDoAll = manager.getDataItem("pdf_isToDoAll").getValue()
           this.connectInputPathMapping = manager.getDataItem("connectInputPathMapping").getValue()
           this.input_isConnectFile = manager.getDataItem("input_isConnectFile").getValue()
+          this.input_isNeedAnnot = manager.getDataItem("input_isNeedAnnot").getValue()
 
           // Load Income Field
           let str_type = ["String", "WString", "V_String", "V_WString", "Date", "Time", "DateTime"]
@@ -205,7 +229,20 @@ export default {
           let incomingFields = manager.getIncomingFields()
           this.str_columns = incomingFields.filter(item => str_type.indexOf(item.strType) > -1).map(item => item.strName)
           this.val_columns = incomingFields.filter(item => val_type.indexOf(item.strType) > -1).map(item => item.strName)
-
+          if (this.connectInputPathMapping.length==0) {
+            if(this.str_columns.includes("FullPath")){
+              this.connectInputPathMapping = "FullPath"
+            }
+            else if(this.str_columns.includes("Output Path")){
+              this.connectInputPathMapping = "Output Path"
+            }
+            else{
+              this.connectInputPathMapping = ""
+            }
+          }
+          if (this.input_isNeedAnnot === "") {
+            this.input_isNeedAnnot = true
+          }
           if ((this.str_columns.length + this.val_columns.length) === 0) {
             this.input_isConnectFile = false;
           }

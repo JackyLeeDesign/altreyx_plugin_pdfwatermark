@@ -1,5 +1,3 @@
-# 2020 Alteryx
-# =============================================
 # List all non-standard packages to be imported by your 
 # script here (only missing packages will be installed)
 from ayx import Package
@@ -7,7 +5,7 @@ try:
     Package.installPackages(package=['pandas','pymupdf'], install_type="install --user")
 except:
     pass
-# =============================================
+
 from ayx import Alteryx
 from datetime import datetime
 import pandas as pd

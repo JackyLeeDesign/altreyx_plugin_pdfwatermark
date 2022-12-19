@@ -5,7 +5,7 @@ try:
     Package.installPackages(package=['pandas','pymupdf'], install_type="install --user")
 except:
     pass
-
+# -----------------------
 from ayx import Alteryx
 from datetime import datetime
 import pandas as pd
@@ -24,9 +24,13 @@ try:
     annot_list = input_data['input_annot']
     watermark_pic_path = input_data['input_watermark'].iloc[0]
     isNeedAnnot = input_data['input_isNeedAnnot'].iloc[0]
+    isNeedWatermark = input_data['input_isNeedWatermark'].iloc[0]
     # 宣告輸出結果之pandas表格
     resultTemplate = {
-        "FilePath": pdf_list
+        "Source File": pdf_list,
+        "Status":"",
+        "Message":"",
+        "Output Path":""
     }
     resultData = pd.DataFrame(resultTemplate)
     for index_file in range(len(pdf_list)):
@@ -39,6 +43,9 @@ try:
                 # 輸出結果之檔名判斷，若已存在則補序號
                 file = os.path.splitext(content_pdf)[0]
                 ext = os.path.splitext(content_pdf)[1]
+                if(ext != ".pdf"):
+                    # raise Exception("該檔案非 PDF 檔，故不處理 ! ")
+                    continue
                 pdf_result=f'{file}_watermark{ext}'
                 i = 2
                 while os.path.exists(pdf_result):
@@ -58,7 +65,7 @@ try:
                     isContainDate = '@' in strContent
                     strPart1=""
                     strPart2=""
-                    if(len(strContentSplit)==2):
+                    if(len(strContentSplit)>=2):
                         strPart1=strContentSplit[0]
                         strPart2=strContentSplit[1]
                     if(len(strContentSplit)==1):
@@ -78,6 +85,7 @@ try:
                     for page in pdfDoc:
                         # 獲取當前頁面旋轉角度
                         currentRotation = page.rotation
+                        page.clean_contents()
                         # 獲取原頁面高度與寬度
                         page.set_rotation(0)
                         # 寬度
@@ -162,7 +170,7 @@ try:
                         # 浮水印寬度
                         watermark_width = 360
                         # 浮水印高度
-                        watermark_height = 76
+                        watermark_height = 72
                         watermark_x1 = (total_width-watermark_width)/2
                         watermark_y1 = (total_height-watermark_height)/2
                         watermark_x2 = watermark_x1 + watermark_width
@@ -171,7 +179,6 @@ try:
                         watermark_p2 = fitz.Point(watermark_x2,watermark_y2) #* page.derotation_matrix
                         rect_watermark = fitz.Rect(watermark_p1.x,watermark_p1.y,watermark_p2.x,watermark_p2.y)
                         watermark_pic = open(watermark_pic_path, "rb").read()
-    
                         # shape = page.new_shape()
                         # # draw the insertion points as red, filled dots
                         # shape.draw_rect(rect1)
@@ -198,14 +205,15 @@ try:
                             if(strPart2):
                                 # 添加第二部分字段(日期後字段)
                                 annot_part2 = page.add_freetext_annot(rect2, strPart2,fontsize=8,fontname="china-t",text_color=black,align=fitz.TEXT_ALIGN_CENTER)
-                        # 添加圖片浮水印
-                        page.insert_image(rect_watermark, stream = watermark_pic)
+                        if(isNeedWatermark):
+                            # 添加圖片浮水印
+                            page.insert_image(rect_watermark, stream = watermark_pic)
                     pdfDoc.save(pdf_result)
                     pdfDoc.close()
 
                     # 顯示成功與否
                     resultData.at[index_file, "Status"] = "Success"
-                    resultData.at[index_file, "Message"] = ""
+                    resultData.at[index_file, "Message"] = "-"
                     resultData.at[index_file, "Output Path"] = pdf_result
             else:
                 raise Exception("該檔案不存在，或路徑輸入錯誤，請確認後再重新執行 ! " + pdf_list[index_file])
@@ -214,7 +222,7 @@ try:
             # 顯示成功與否
             resultData.at[index_file, "Status"] = "Failure"
             resultData.at[index_file, "Message"] = str(e)
-            resultData.at[index_file, "Output Path"] = ""
+            resultData.at[index_file, "Output Path"] = "-"
             if(pdf_result and os.path.exists(pdf_result)):
                 os.remove(pdf_result)
 
@@ -223,7 +231,8 @@ except Exception as e:
     # 顯示成功與否
     resultData["Status"] = "Failure"
     resultData["Message"] = "Alteryx 解析 PDF 過程發生錯誤，請與 AI&T 同仁聯繫("+str(e)+")"
-    resultData["Output Path"] = ""
+    resultData["Output Path"] = "-"
     if(pdf_result and os.path.exists(pdf_result)):
         os.remove(pdf_result)
 Alteryx.write(resultData,1)
+# Copyright © 2001-2022 Python Software Foundation; All Rights Reserved.

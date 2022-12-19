@@ -1,6 +1,6 @@
 {
-  "name": "alteryx_plugin_xlsx",
-  "version": "0.1.4",
+  "name": "alteryx_pdf_watermark",
+  "version": "0.1.7",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",

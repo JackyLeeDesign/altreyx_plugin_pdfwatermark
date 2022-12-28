@@ -86,16 +86,26 @@ try:
                         # 獲取當前頁面旋轉角度
                         currentRotation = page.rotation
                         page.clean_contents()
-                        # 獲取原頁面高度與寬度
+                        # 獲取原頁面高度與寬度(未轉置前)
                         page.set_rotation(0)
-                        # 寬度
-                        ori_total_width = page.rect.x1
+                         # 寬度
+                        ori_width = page.rect.x1
                         # 高度
-                        ori_total_height = page.rect.y1
-                        page.set_rotation(currentRotation)
+                        ori_height = page.rect.y1
 
-                        total_width  = ori_total_width
-                        total_height = ori_total_height
+                        # 獲取調整計算文件寬度與高度
+                        if(currentRotation == 0 or currentRotation == 180):
+                            # 寬度
+                            rotated_width = ori_width 
+                            # 高度
+                            rotated_height = ori_height
+
+                        if(currentRotation == 90 or currentRotation == 270):
+                            # 寬度
+                            rotated_width = ori_height
+                            # 高度
+                            rotated_height = ori_width
+                        page.set_rotation(currentRotation)
 
                         # 提示字段Part1寬度
                         strPart1_width = len(strPart1)*8
@@ -103,8 +113,12 @@ try:
                         strPart2_width = len(strPart2)*8
                         # 時間字段寬度
                         strTime_width = len(strTime)*5
-                        # 提示字段總寬度
-                        total_str_width = strPart1_width + strPart2_width + strTime_width
+                        # 提示字段總寬度(已含框線與字的間距)
+                        total_str_width = strPart1_width 
+                        if(isContainDate):
+                            total_str_width += strTime_width
+                        if(strPart2!=""):
+                            total_str_width += strPart2_width
 
                         # 字段之間的間距
                         rect_margin = 5
@@ -114,52 +128,6 @@ try:
                         rect_height = 8
                         # 文字框距離文件上方高度
                         rect_top = 20
-                        
-                        # 計算浮水印調整角度與各點座標調整變量
-                        adjustRotation = 0
-                        # if currentRotation == 90:
-                        #     total_width = ori_total_height
-                        #     total_height = ori_total_width
-                        #     adjustRotation = currentRotation
-                        
-                        # 最大可填字數計算
-                        # print((total_width-strTime_width-rect_border_margin*2-rect_margin*4)/8)
-
-                        # 計算part1文字框的 P1(x,y), P2(x,y)座標
-                        rect1_x1 = (total_width-total_str_width)/2
-                        rect1_y1 = rect_top
-                        rect1_x2 = rect1_x1 + strPart1_width + rect_margin
-                        rect1_y2 = rect_top + rect_height
-                        rect1_p1 = fitz.Point(rect1_x1,rect1_y1) #* page.derotation_matrix
-                        rect1_p2 = fitz.Point(rect1_x2,rect1_y2) #* page.derotation_matrix
-                        rect1 = fitz.Rect(rect1_p1.x,rect1_p1.y,rect1_p2.x,rect1_p2.y)
-
-                        # 計算time文字框的 P1(x,y), P2(x,y)座標
-                        rect_time_x1 = rect1_x2
-                        rect_time_y1 = rect_top
-                        rect_time_x2 = rect_time_x1 + strTime_width + rect_margin
-                        rect_time_y2 = rect_top + rect_height
-                        rect_time_p1 = fitz.Point(rect_time_x1,rect_time_y1) #* page.derotation_matrix
-                        rect_time_p2 = fitz.Point(rect_time_x2,rect_time_y2) #* page.derotation_matrix
-                        rect_time = fitz.Rect(rect_time_p1.x,rect_time_p1.y,rect_time_p2.x,rect_time_p2.y)
-
-                        # 計算part2文字框的 P1(x,y), P2(x,y)座標
-                        rect2_x1 = rect_time_x2
-                        rect2_y1 = rect_top
-                        rect2_x2 = rect2_x1 + strPart2_width + rect_margin
-                        rect2_y2 = rect_top + rect_height
-                        rect2_p1 = fitz.Point(rect2_x1,rect2_y1) #* page.derotation_matrix
-                        rect2_p2 = fitz.Point(rect2_x2,rect2_y2) #* page.derotation_matrix
-                        rect2 = fitz.Rect(rect2_p1.x,rect2_p1.y,rect2_p2.x,rect2_p2.y)
-
-                        # 外框
-                        rect_border_x1 = rect1_x1 - rect_border_margin
-                        rect_border_y1 = rect_top - rect_border_margin
-                        rect_border_x2 = rect2_x2 - rect_margin + rect_border_margin
-                        rect_border_y2 = rect_top + rect_height + rect_border_margin
-                        rect_border_p1 = fitz.Point(rect_border_x1,rect_border_y1) #* page.derotation_matrix
-                        rect_border_p2 = fitz.Point(rect_border_x2,rect_border_y2) #* page.derotation_matrix
-                        rect_border = fitz.Rect(rect_border_p1.x,rect_border_p1.y,rect_border_p2.x,rect_border_p2.y)
 
                         # 浮水印
                         # 獲取浮水印圖片寬度與高度
@@ -171,43 +139,131 @@ try:
                         watermark_width = 360
                         # 浮水印高度
                         watermark_height = 72
-                        watermark_x1 = (total_width-watermark_width)/2
-                        watermark_y1 = (total_height-watermark_height)/2
-                        watermark_x2 = watermark_x1 + watermark_width
-                        watermark_y2 = watermark_y1 + watermark_height
-                        watermark_p1 = fitz.Point(watermark_x1,watermark_y1) #* page.derotation_matrix
-                        watermark_p2 = fitz.Point(watermark_x2,watermark_y2) #* page.derotation_matrix
-                        rect_watermark = fitz.Rect(watermark_p1.x,watermark_p1.y,watermark_p2.x,watermark_p2.y)
-                        watermark_pic = open(watermark_pic_path, "rb").read()
-                        # shape = page.new_shape()
-                        # # draw the insertion points as red, filled dots
-                        # shape.draw_rect(rect1)
-                        # shape.draw_rect(rect2)
-                        # shape.draw_rect(rect_time)
-                        # shape.draw_rect(rect_border)
-                        # shape.finish(width=0.3, color=(1,0,0), fill=(1,0,0))
-                        # # store our work to the page
-                        # shape.commit()
+                    
+                        adjustTextRotation = 0
+                        adjustRotation = 0
+                        # 最大可填字數計算
+                        # print((total_width-strTime_width-rect_border_margin*2-rect_margin*4)/8)
+                        if (currentRotation==0):
+                            # 頂部提示框起點
+                            rect_border_x1 = (rotated_width - total_str_width)/2 - rect_border_margin
+                            rect_border_y1 = rect_top
+                            # 頂部提示框結束點
+                            rect_border_x2 = rect_border_x1 + total_str_width + rect_border_margin * 2
+                            rect_border_y2 = rect_border_y1 + rect_height + rect_border_margin * 2
+                            # 頂部提示框文字與時間位置
+                            textPos1 = fitz.Point(rect_border_x1 + rect_border_margin, rect_border_y1 + 14) 
+                            timePos = fitz.Point(textPos1.x + strPart1_width , textPos1.y)
+                            textPos2 = fitz.Point(timePos.x + strTime_width,textPos1.y)
 
-                        # 添加外框
+                            # 浮水印起點
+                            watermark_x1 = (rotated_width-watermark_width)/2
+                            watermark_y1 = (rotated_height-watermark_height)/2
+                            # 浮水印結束點
+                            watermark_x2 = watermark_x1 + watermark_width
+                            watermark_y2 = watermark_y1 + watermark_height
+
+                        if (currentRotation==90):
+                            # 頂部提示起點
+                            rect_border_x1 = rect_top
+                            rect_border_y1 = (rotated_width - total_str_width)/2
+                            # 頂部提示結束點
+                            rect_border_x2 = rect_top + rect_height + rect_border_margin * 2
+                            rect_border_y2 = (rotated_width - total_str_width)/2 + total_str_width + rect_border_margin * 2
+                            # 頂部提示框文字與時間位置
+                            textPos1 = fitz.Point(rect_border_x1 + 14,rect_border_y2 - rect_border_margin)
+                            timePos = fitz.Point(textPos1.x, textPos1.y - strPart1_width)
+                            textPos2 = fitz.Point(textPos1.x,timePos.y - strTime_width)
+                            # 計算頂部提示內容調整角度    
+                            adjustTextRotation = 90
+
+                            # 浮水印起點
+                            watermark_x1 = (ori_width-watermark_height)/2
+                            watermark_y1 = (ori_height-watermark_width)/2
+                            # 浮水印結束點
+                            watermark_x2 = watermark_x1 + watermark_height
+                            watermark_y2 = watermark_y1 + watermark_width
+                            # 計算浮水印調整角度    
+                            adjustRotation = 90
+
+                        if (currentRotation==180):
+                            # 頂部提示起點
+                            rect_border_x1 = (rotated_width - total_str_width)/2
+                            rect_border_y1 = ori_height - rect_top - rect_height - rect_border_margin*2
+                            # 頂部提示結束點
+                            rect_border_x2 = (rotated_width - total_str_width)/2 + total_str_width + rect_border_margin * 2
+                            rect_border_y2 = ori_height - rect_top
+                             # 頂部提示框文字與時間位置
+                            textPos1 = fitz.Point(rect_border_x2 - rect_border_margin, rect_border_y2 - 14)
+                            timePos = fitz.Point(textPos1.x - strPart1_width,textPos1.y)
+                            textPos2 = fitz.Point(timePos.x - strTime_width,textPos1.y)
+                            # 計算頂部提示內容調整角度    
+                            adjustTextRotation = 180
+                                
+
+                            # 浮水印起點
+                            watermark_x1 = (ori_width-watermark_width)/2
+                            watermark_y1 = (ori_height-watermark_height)/2
+                            # 浮水印結束點
+                            watermark_x2 = watermark_x1 + watermark_width
+                            watermark_y2 = watermark_y1 + watermark_height
+                            # 計算浮水印調整角度    
+                            adjustRotation = 180
+
+                        if (currentRotation==270):
+                            # 頂部提示起點
+                            rect_border_x1 = ori_width - rect_top - rect_height - rect_border_margin*2
+                            rect_border_y1 = (rotated_width - total_str_width)/2
+                            # 頂部提示結束點
+                            rect_border_x2 = ori_width - rect_top
+                            rect_border_y2 = (rotated_width - total_str_width)/2 + total_str_width + rect_border_margin * 2
+                            # 頂部提示框文字與時間位置
+                            textPos1 = fitz.Point(rect_border_x1 + rect_border_margin*2 + rect_height -14 , rect_border_y1 + rect_border_margin)
+                            timePos = fitz.Point(textPos1.x, textPos1.y + strPart1_width)
+                            textPos2 = fitz.Point(textPos1.x,timePos.y + strTime_width)
+                            # 計算頂部提示內容調整角度    
+                            adjustTextRotation = -90
+
+                            # 浮水印起點
+                            watermark_x1 = (ori_width-watermark_height)/2
+                            watermark_y1 = (ori_height-watermark_width)/2
+                            # 浮水印結束點
+                            watermark_x2 = watermark_x1 + watermark_height
+                            watermark_y2 = watermark_y1 + watermark_width
+                            # 計算浮水印調整角度    
+                            adjustRotation = -90
+                        
+                        # 產生頂部提示外框區域
+                        rect_border_p1 = fitz.Point(rect_border_x1,rect_border_y1)
+                        rect_border_p2 = fitz.Point(rect_border_x2,rect_border_y2)
+                        rect_border = fitz.Rect(rect_border_p1.x,rect_border_p1.y,rect_border_p2.x,rect_border_p2.y)
+
+                        # 產生浮水印區域
+                        watermark_p1 = fitz.Point(watermark_x1,watermark_y1)
+                        watermark_p2 = fitz.Point(watermark_x2,watermark_y2)
+                        rect_watermark = fitz.Rect(watermark_p1.x,watermark_p1.y,watermark_p2.x,watermark_p2.y)
+
+                        # 於 PDF 繪製上述各區域計算結果
+                        # 繪製頂部提示區域
                         if(isNeedAnnot):
-                            annot_border = page.add_rect_annot(rect_border)
-                            annot_border.set_border(width=0.5)
-                            annot_border.set_colors(stroke=black)
-                            annot_border.set_rotation(adjustRotation)
-                            annot_border.update()
+                            # 添加字段外框
+                            annot_border = page.draw_rect(rect_border,color=black,fill=None,width=0.5,dashes=None)
+                            # 添加字段
                             if(strPart1):
-                                # 添加第一部分字段(日期前字段)
-                                annot_part1 = page.add_freetext_annot(rect1, strPart1,fontsize=8,fontname="china-t",text_color=black,align=fitz.TEXT_ALIGN_CENTER)
+                                annot_text1 = page.insert_text(textPos1, strPart1,fontsize=8,fontname="china-t",color=black,rotate=adjustTextRotation)
                             if(isContainDate):
-                                # 添加日期字段
-                                annot_time = page.add_freetext_annot(rect_time, strTime,fontsize=8,fontname="cour",text_color=black,align=fitz.TEXT_ALIGN_CENTER)
+                                annot_time = page.insert_text(timePos, strTime,fontsize=8,fontname="cour",color=black,rotate=adjustTextRotation)
                             if(strPart2):
-                                # 添加第二部分字段(日期後字段)
-                                annot_part2 = page.add_freetext_annot(rect2, strPart2,fontsize=8,fontname="china-t",text_color=black,align=fitz.TEXT_ALIGN_CENTER)
+                                annot_text2 = page.insert_text(textPos2, strPart2,fontsize=8,fontname="china-t",color=black,rotate=adjustTextRotation)
+                            
+                        # 繪製圖片浮水印
                         if(isNeedWatermark):
-                            # 添加圖片浮水印
-                            page.insert_image(rect_watermark, stream = watermark_pic)
+                            # 讀取浮水印圖片檔
+                            watermark_pic = open(watermark_pic_path, "rb").read()
+                            # 添加浮水印
+                            page.insert_image(rect_watermark, stream = watermark_pic ,rotate=adjustTextRotation)
+
+                    # 儲存 PDF 檔案
                     pdfDoc.save(pdf_result)
                     pdfDoc.close()
 

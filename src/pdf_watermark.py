@@ -61,7 +61,7 @@ try:
                     black  = (0,0,0)
                     # 字段切割處理
                     strContent = annot_list[index_file]
-                    strContentSplit = strContent.split("@")
+                    strContentSplit = strContent.split("@",1)
                     isContainDate = '@' in strContent
                     strPart1=""
                     strPart2=""
